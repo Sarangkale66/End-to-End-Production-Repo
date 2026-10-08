@@ -1,0 +1,25 @@
+name: Restrict PR to Main
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  validate-source-branch:
+    name: Allow Only 'check' Branch
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Verify PR source branch is 'check'
+        run: |
+          echo "PR Target Branch (Base): ${{ github.base_ref }}"
+          echo "PR Source Branch (Head): ${{ github.head_ref }}"
+
+          if [ "${{ github.head_ref }}" != "check" ]; then
+            echo "❌ ERROR: Pull requests into '${{ github.base_ref }}' are only accepted from the 'check' branch!"
+            echo "Your PR originates from branch '${{ github.head_ref }}'."
+            exit 1
+          fi
+
+          echo "✅ PR source branch verified: '${{ github.head_ref }}' -> '${{ github.base_ref }}'"
