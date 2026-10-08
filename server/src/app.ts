@@ -8,6 +8,8 @@ app.use(express.urlencoded({ extended: true }));
 app.get("/:id", (req: Request, res: Response) => {
   const { id } = req.params as { id: string };
 
+  console.log(id);
+
   return res.json({
     message: `${id}`,
     success: true,
