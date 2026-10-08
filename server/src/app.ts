@@ -9,7 +9,7 @@ app.get("/:id", (req: Request, res: Response) => {
   const { id } = req.params as { id: string };
 
   return res.json({
-    message: ``,
+    message: `${id}`,
     success: true,
     uptime: process.uptime(),
   });
