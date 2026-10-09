@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - check
+      - main
   pull_request:
     branches:
       - check
+      - main
   workflow_dispatch:
 
 jobs:
@@ -42,3 +44,6 @@ jobs:
 
       - name: 2. Run Prettier Check
         run: pnpm run format:check
+
+      - name: 3. Run Typescript Build
+        run: pnpm run build

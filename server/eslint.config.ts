@@ -5,6 +5,9 @@ import { defineConfig } from "eslint/config";
 import eslintConfigPrettier from "eslint-config-prettier/flat";
 
 export default defineConfig([
+  {
+    ignores: ["dist/**", "node_modules/**"],
+  },
   // 1. Recommended Base JavaScript Rules
   js.configs.recommended,
   // 2. Recommended Base TypeScript Rules
