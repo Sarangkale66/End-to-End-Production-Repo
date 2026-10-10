@@ -21,6 +21,7 @@ app.get("/health", (_: Request, res: Response) => {
   res.json({
     status: true,
     message: "healthy",
+    uptime: process.uptime(),
   });
 });
 
