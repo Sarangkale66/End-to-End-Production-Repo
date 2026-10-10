@@ -45,11 +45,11 @@ jobs:
           EC2_HOST: ${{ secrets.EC2_HOST }}
           EC2_USER: ${{ secrets.EC2_USER || 'ubuntu' }}
         run: |
-          echo "Preparing remote staging directory at /home/ubuntu/deploy-staging..."
-          ssh $EC2_USER@$EC2_HOST "mkdir -p /home/ubuntu/deploy-staging && rm -rf /home/ubuntu/deploy-staging/*"
+          echo "Preparing remote staging directory at /home/$EC2_USER/deploy-staging..."
+          ssh $EC2_USER@$EC2_HOST "rm -rf /home/$EC2_USER/deploy-staging && mkdir -p /home/$EC2_USER/deploy-staging"
 
           echo "Transferring repository files to EC2 via SCP..."
-          scp -r . $EC2_USER@$EC2_HOST:/home/ubuntu/deploy-staging/
+          scp -r . $EC2_USER@$EC2_HOST:/home/$EC2_USER/deploy-staging/
 
       - name: 4. Execute Deployment & Automated Rollback Script via SSH
         env:
@@ -57,7 +57,7 @@ jobs:
           EC2_USER: ${{ secrets.EC2_USER || 'ubuntu' }}
         run: |
           echo "Executing redeploy.sh on EC2..."
-          ssh $EC2_USER@$EC2_HOST "bash /home/ubuntu/redeploy.sh"
+          ssh $EC2_USER@$EC2_HOST "bash /home/$EC2_USER/redeploy.sh"
 
       - name: 5. Verify Public Health via Caddy Reverse Proxy (Port 80)
         env:
