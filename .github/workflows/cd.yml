@@ -1,0 +1,68 @@
+name: CD
+
+on:
+  # Triggers automatically AFTER the CI workflow completes on the 'main' branch
+  workflow_run:
+    workflows: ["CI"]
+    branches:
+      - main
+    types:
+      - completed
+
+  # Allows manual deployment triggering from the GitHub Actions tab if needed
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to EC2 (Oregon)
+    runs-on: ubuntu-latest
+
+    # CRITICAL GATE: Only execute if CI completed with conclusion 'success'
+    # If the CI workflow fails or is cancelled, this deployment job is SKIPPED.
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' ||
+          (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') }}
+
+    steps:
+      - name: 1. Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Check out the exact commit that passed the CI workflow run
+          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
+
+      - name: 2. Setup SSH Key & Known Hosts
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
+
+      - name: 3. Transfer Files to EC2 Staging Directory via SCP
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER || 'ubuntu' }}
+        run: |
+          echo "Preparing remote staging directory at /home/ubuntu/deploy-staging..."
+          ssh $EC2_USER@$EC2_HOST "mkdir -p /home/ubuntu/deploy-staging && rm -rf /home/ubuntu/deploy-staging/*"
+
+          echo "Transferring repository files to EC2 via SCP..."
+          scp -r . $EC2_USER@$EC2_HOST:/home/ubuntu/deploy-staging/
+
+      - name: 4. Execute Deployment & Automated Rollback Script via SSH
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER || 'ubuntu' }}
+        run: |
+          echo "Executing redeploy.sh on EC2..."
+          ssh $EC2_USER@$EC2_HOST "bash /home/ubuntu/prod-end-to-end/redeploy.sh"
+
+      - name: 5. Verify Public Health via Caddy Reverse Proxy (Port 80)
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+        run: |
+          echo "Validating live application health through Caddy (Port 80)..."
+          curl -f --retry 5 --retry-delay 2 "http://$EC2_HOST/health"
+          echo "✅ Deployment verified healthy on EC2 Oregon!"
