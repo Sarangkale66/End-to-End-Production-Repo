@@ -20,7 +20,7 @@ app.get("/:id", (req: Request, res: Response) => {
 app.get("/health", (_: Request, res: Response) => {
   res.json({
     status: true,
-    message: "healthy",
+    message: "healthy hamza",
     uptime: process.uptime(),
   });
 });
