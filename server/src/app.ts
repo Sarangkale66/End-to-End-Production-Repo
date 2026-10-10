@@ -5,6 +5,14 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.get("/health", (_: Request, res: Response) => {
+  res.json({
+    status: true,
+    message: "healthy hamza",
+    uptime: process.uptime(),
+  });
+});
+
 app.get("/:id", (req: Request, res: Response) => {
   const { id } = req.params as { id: string };
 
@@ -13,14 +21,6 @@ app.get("/:id", (req: Request, res: Response) => {
   return res.json({
     message: `${id}`,
     success: true,
-    uptime: process.uptime(),
-  });
-});
-
-app.get("/health", (_: Request, res: Response) => {
-  res.json({
-    status: true,
-    message: "healthy",
     uptime: process.uptime(),
   });
 });
